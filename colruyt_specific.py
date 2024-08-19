@@ -28,12 +28,14 @@ SLEEP_TIME = 5
        }
        ]]
 """
+
+
 def getCategoryTxt(cat):
     result = ""
     if type(cat) is list:
         for l in cat:
-            result += getCategoryTxt(l) +", "
-        return result  
+            result += getCategoryTxt(l) + ", "
+        return result
     if cat.get("name") is not None:
         result += cat.get("name") + ", "
     if cat.get("children") is not None:
@@ -47,9 +49,11 @@ def getCategoryTxt(cat):
     Max 250 products.
     Returns the response. <=> None if there is an error.
 """
-def getProducts(page, amount, placeId=604):
-    time.sleep(int(random.random()*SLEEP_TIME)) #TODO, its in order to limit the send rate. 
 
+
+def getProducts(page, amount, placeId=604):
+    # TODO, its in order to limit the send rate.
+    time.sleep(int(random.random()*SLEEP_TIME))
 
     params = {
         "clientCode": "clp",
@@ -60,14 +64,10 @@ def getProducts(page, amount, placeId=604):
         "sort": "popularity asc",
         "ts": time.time()
     }
-    try:        
+    try:
         # res = requests.get(API_URL, params=params)
         res = ProxyRequests(API_URL)
         res.get(params)
-
-    except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout, requests.exceptions.SSLError) as err:
-        #database.log("error", "Error using proxies: " + str(err), WINKEL)
-        pass
 
     except Exception as e:
         #database.log("error", "Request error : " + str(e), WINKEL)
@@ -75,11 +75,14 @@ def getProducts(page, amount, placeId=604):
         return None
     return str(res)
 
+
 """
     Convert text into JSON. 
     Return None if there is an error.
 
 """
+
+
 def responseToJson(resp):
     try:
         result = json.loads(resp)
@@ -101,6 +104,7 @@ def processProducts(js):
         for product in js.get("products"):
             processProduct(product)
 
+
 def processProduct(product):
     price = product.get("price")
     if product.get("catagories") is not None:
@@ -108,35 +112,37 @@ def processProduct(product):
         categories = getCategoryTxt(categories)
     else:
         categories = product.get("topCategoryName")
-    #database.processProduct("Colruyt",
-    #product.get("productId"),
-    #product.get("name"),
-    #product.get("description"),
-    #product.get("brand"),
-    #product.get("thumbNail"),
-    #product.get("content"),
-    #price.get("basicPrice"),
-    #price.get("quantityPrice"),
-    #price.get("quantityPriceQuantity"),
-    #price.get("measurementUnitPrice"),
-    #price.get("measurementUnitQuantityPrice"),
-    #price.get("measurementUnit"),
-    #categories)
+    # database.processProduct("Colruyt",
+    # product.get("productId"),
+    # product.get("name"),
+    # product.get("description"),
+    # product.get("brand"),
+    # product.get("thumbNail"),
+    # product.get("content"),
+    # price.get("basicPrice"),
+    # price.get("quantityPrice"),
+    # price.get("quantityPriceQuantity"),
+    # price.get("measurementUnitPrice"),
+    # price.get("measurementUnitQuantityPrice"),
+    # price.get("measurementUnit"),
+    # categories)
+
 
 def test(page):
     print("Process page " + str(page))
     response = getProducts(page, 250)
+    print(response)
     response_json = responseToJson(response)
     if response_json is not None and response_json.get("productsReturned") is not None and response_json.get("productsReturned") == 0:
         #database.log("error", "No products returned. " + str(response[0:500]), WINKEL)
         return None
-        
+
     processProducts(response_json)
     print(">>> process page " + str(page) + " done.")
 
-# start_time = time.time()
-pages = range(1,1000)
 
+# start_time = time.time()
+pages = range(1)
 
 
 # for page in pages:
@@ -157,4 +163,3 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
 # Experiment
 # - Using no threading for the request, but for the processing of the received data (check & update database): 306 seconds
 # - Using threading for the requests and no for processing: 332 sec - 176sec
-
